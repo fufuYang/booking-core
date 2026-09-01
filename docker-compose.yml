@@ -17,6 +17,8 @@ services:
       dockerfile: docker/php/Dockerfile
     volumes:
       - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - mysql
       - redis
