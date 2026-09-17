@@ -3,97 +3,41 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreAppointmentRequest;
-use App\Models\Appointment;
-use App\Models\AvailableSlot;
-use App\Models\Service;
-use Illuminate\Database\QueryException;
+use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
-// 移除 extends Controller，讓它變成一個乾淨的純 PHP 類別
+/**
+ * 只負責 HTTP 進出：接收請求、交給 Service 層、把結果包成 JSON。
+ * 業務規則在 App\Services\BookingService，資料存取在 App\Repositories。
+ */
 class BookingController
 {
-    // 取得所有服務項目
-    public function getServices()
-    {
-        $services = Service::all();
+    public function __construct(
+        private readonly BookingService $booking,
+    ) {}
 
-        return response()->json($services);
+    // 取得所有服務項目
+    public function getServices(): JsonResponse
+    {
+        return response()->json($this->booking->listServices());
     }
 
     // 取得未來可預約的時段
-    public function getAvailableSlots()
+    public function getAvailableSlots(): JsonResponse
     {
-        $slots = AvailableSlot::where('is_booked', false)
-            ->where('date', '>=', now()->toDateString())
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-
-        return response()->json($slots);
+        return response()->json($this->booking->listAvailableSlots());
     }
 
-    /**
-     * 建立一筆預約。
-     *
-     * 併發防護分成兩層：
-     *   1. transaction 內以 lockForUpdate 鎖住該時段，讓同時進來的請求排隊檢查 is_booked。
-     *   2. appointments.available_slot_id 的 unique constraint 作為最後防線，
-     *      即使鎖失效（例如換成不支援列鎖的引擎）也不會寫出兩筆重複預約。
-     */
+    // 建立一筆預約；時段被搶走時 Service 會拋出例外並自行轉成 409
     public function store(StoreAppointmentRequest $request): JsonResponse
     {
-        try {
-            $appointment = DB::transaction(function () use ($request) {
-                $slot = AvailableSlot::whereKey($request->integer('available_slot_id'))
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($slot === null || $slot->is_booked) {
-                    return null;
-                }
-
-                $appointment = Appointment::create([
-                    'user_id' => $request->user()->id,
-                    'service_id' => $request->integer('service_id'),
-                    'available_slot_id' => $slot->id,
-                    'status' => 'pending',
-                    'meta_data' => $request->input('meta_data'),
-                ]);
-
-                $slot->update(['is_booked' => true]);
-
-                return $appointment;
-            });
-        } catch (QueryException $e) {
-            // 撞到 unique constraint：代表另一個請求剛剛搶先訂走了。
-            if ($this->isUniqueViolation($e)) {
-                return $this->slotTakenResponse();
-            }
-
-            throw $e;
-        }
-
-        if ($appointment === null) {
-            return $this->slotTakenResponse();
-        }
-
-        return response()->json(
-            $appointment->load(['service', 'availableSlot']),
-            JsonResponse::HTTP_CREATED,
+        $appointment = $this->booking->book(
+            user: $request->user(),
+            serviceId: $request->integer('service_id'),
+            slotId: $request->integer('available_slot_id'),
+            metaData: $request->input('meta_data'),
         );
-    }
 
-    private function isUniqueViolation(QueryException $e): bool
-    {
-        return $e->getCode() === '23000';
-    }
-
-    private function slotTakenResponse(): JsonResponse
-    {
-        return response()->json(
-            ['message' => '這個時段已經被預約了，請重新選擇。'],
-            JsonResponse::HTTP_CONFLICT,
-        );
+        return response()->json($appointment, JsonResponse::HTTP_CREATED);
     }
 }
