@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Repositories\Contracts\AppointmentRepositoryInterface;
 use App\Repositories\Contracts\AvailableSlotRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\AppointmentRepository;
 use App\Repositories\Eloquent\AvailableSlotRepository;
 use App\Repositories\Eloquent\ServiceRepository;
+use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -23,5 +25,6 @@ class RepositoryServiceProvider extends ServiceProvider
         ServiceRepositoryInterface::class => ServiceRepository::class,
         AvailableSlotRepositoryInterface::class => AvailableSlotRepository::class,
         AppointmentRepositoryInterface::class => AppointmentRepository::class,
+        UserRepositoryInterface::class => UserRepository::class,
     ];
 }
