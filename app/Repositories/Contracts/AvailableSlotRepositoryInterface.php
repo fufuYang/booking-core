@@ -23,4 +23,9 @@ interface AvailableSlotRepositoryInterface
      * 將時段標記為已預約。
      */
     public function markAsBooked(AvailableSlot $slot): void;
+
+    /**
+     * 將時段標記為未預約（釋放時段）。
+     */
+    public function release(AvailableSlot $slot): void;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppointmentAlreadyCancelledException;
 use App\Exceptions\SlotAlreadyBookedException;
 use App\Models\Appointment;
 use App\Models\AvailableSlot;
@@ -21,6 +22,14 @@ class BookingService
         private readonly AvailableSlotRepositoryInterface $slots,
         private readonly AppointmentRepositoryInterface $appointments,
     ) {}
+
+    /**
+     * @return Collection<int, Appointment>
+     */
+    public function listUserAppointments(User $user): Collection
+    {
+        return $this->appointments->forUser($user->id);
+    }
 
     /**
      * @return Collection<int, Service>
@@ -86,6 +95,32 @@ class BookingService
         }
 
         return $appointment->load(['service', 'availableSlot']);
+    }
+
+    /**
+     * 取消預約並釋放時段。
+     *
+     * @throws AppointmentAlreadyCancelledException
+     */
+    public function cancel(Appointment $appointment): Appointment
+    {
+        if ($appointment->status === 'cancelled') {
+            throw new AppointmentAlreadyCancelledException;
+        }
+
+        return DB::transaction(function () use ($appointment) {
+            $slot = $this->slots->findForUpdate($appointment->available_slot_id);
+
+            $this->appointments->markAsCancelled($appointment);
+
+            if ($slot !== null) {
+                $this->slots->release($slot);
+            }
+
+            $appointment->refresh();
+
+            return $appointment->load(['service', 'availableSlot']);
+        });
     }
 
     private function isUniqueViolation(QueryException $e): bool

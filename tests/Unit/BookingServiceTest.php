@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\AppointmentAlreadyCancelledException;
 use App\Exceptions\SlotAlreadyBookedException;
+use App\Models\Appointment;
 use App\Models\AvailableSlot;
 use App\Models\User;
 use App\Repositories\Contracts\AppointmentRepositoryInterface;
@@ -92,5 +94,28 @@ class BookingServiceTest extends TestCase
         $this->services->shouldReceive('all')->once()->andReturn($expected);
 
         $this->assertSame($expected, $this->booking->listServices());
+    }
+
+    public function test_使用者可以查詢自己的預約列表(): void
+    {
+        $expected = new Collection;
+
+        $this->appointments->shouldReceive('forUser')
+            ->once()
+            ->with(1)
+            ->andReturn($expected);
+
+        $user = (new User)->forceFill(['id' => 1]);
+
+        $this->assertSame($expected, $this->booking->listUserAppointments($user));
+    }
+
+    public function test_已取消的預約無法再次取消(): void
+    {
+        $appointment = (new Appointment)->forceFill(['status' => 'cancelled']);
+
+        $this->expectException(AppointmentAlreadyCancelledException::class);
+
+        $this->booking->cancel($appointment);
     }
 }
