@@ -21,4 +21,3 @@ interface AppointmentRepositoryInterface
 
     public function markAsCancelled(Appointment $appointment): void;
 }
-

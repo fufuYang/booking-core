@@ -29,7 +29,6 @@ class ManageAppointmentsTest extends TestCase
         $this->postJson('/api/appointments/1/cancel')->assertUnauthorized();
     }
 
-
     public function test_登入者可以查詢自己的預約列表(): void
     {
         $user = User::factory()->create();

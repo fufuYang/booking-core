@@ -29,4 +29,3 @@ interface AvailableSlotRepositoryInterface
      */
     public function release(AvailableSlot $slot): void;
 }
-

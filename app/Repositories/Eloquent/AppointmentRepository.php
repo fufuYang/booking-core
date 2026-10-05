@@ -37,4 +37,3 @@ class AppointmentRepository implements AppointmentRepositoryInterface
         $appointment->update(['status' => 'cancelled']);
     }
 }
-

@@ -22,4 +22,3 @@ Route::middleware('auth:sanctum')->group(function () {
 // 我們的預約系統公開 API
 Route::get('/services', [BookingController::class, 'getServices']);
 Route::get('/slots', [BookingController::class, 'getAvailableSlots']);
-

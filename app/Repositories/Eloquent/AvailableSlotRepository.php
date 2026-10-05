@@ -37,4 +37,3 @@ class AvailableSlotRepository implements AvailableSlotRepositoryInterface
         $slot->update(['is_booked' => false]);
     }
 }
-

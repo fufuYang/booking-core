@@ -31,7 +31,6 @@ class BookingService
         return $this->appointments->forUser($user->id);
     }
 
-
     /**
      * @return Collection<int, Service>
      */
@@ -129,4 +128,3 @@ class BookingService
         return $e->getCode() === '23000';
     }
 }
-

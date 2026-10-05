@@ -68,4 +68,3 @@ class BookingController
         return response()->json($cancelled);
     }
 }
-

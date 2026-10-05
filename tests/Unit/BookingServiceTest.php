@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\AppointmentAlreadyCancelledException;
 use App\Exceptions\SlotAlreadyBookedException;
+use App\Models\Appointment;
 use App\Models\AvailableSlot;
 use App\Models\User;
 use App\Repositories\Contracts\AppointmentRepositoryInterface;
@@ -110,9 +112,8 @@ class BookingServiceTest extends TestCase
     {
         $appointment = new Appointment(['status' => 'cancelled']);
 
-        $this->expectException(\App\Exceptions\AppointmentAlreadyCancelledException::class);
+        $this->expectException(AppointmentAlreadyCancelledException::class);
 
         $this->booking->cancel($appointment);
     }
 }
-
