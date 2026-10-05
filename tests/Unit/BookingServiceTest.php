@@ -93,4 +93,26 @@ class BookingServiceTest extends TestCase
 
         $this->assertSame($expected, $this->booking->listServices());
     }
+
+    public function test_使用者可以查詢自己的預約列表(): void
+    {
+        $expected = new Collection;
+
+        $this->appointments->shouldReceive('forUser')
+            ->once()
+            ->with(1)
+            ->andReturn($expected);
+
+        $this->assertSame($expected, $this->booking->listUserAppointments(new User(['id' => 1])));
+    }
+
+    public function test_已取消的預約無法再次取消(): void
+    {
+        $appointment = new Appointment(['status' => 'cancelled']);
+
+        $this->expectException(\App\Exceptions\AppointmentAlreadyCancelledException::class);
+
+        $this->booking->cancel($appointment);
+    }
 }
+
