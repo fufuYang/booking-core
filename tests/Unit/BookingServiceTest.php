@@ -105,12 +105,14 @@ class BookingServiceTest extends TestCase
             ->with(1)
             ->andReturn($expected);
 
-        $this->assertSame($expected, $this->booking->listUserAppointments(new User(['id' => 1])));
+        $user = (new User)->forceFill(['id' => 1]);
+
+        $this->assertSame($expected, $this->booking->listUserAppointments($user));
     }
 
     public function test_已取消的預約無法再次取消(): void
     {
-        $appointment = new Appointment(['status' => 'cancelled']);
+        $appointment = (new Appointment)->forceFill(['status' => 'cancelled']);
 
         $this->expectException(AppointmentAlreadyCancelledException::class);
 

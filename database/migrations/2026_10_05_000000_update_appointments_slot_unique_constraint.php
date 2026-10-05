@@ -11,14 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // 1. 先把帶有 cascadeOnDelete 的外鍵約束與舊的 unique 索引移除
         Schema::table('appointments', function (Blueprint $table) {
-            // 為 available_slot_id 補上一般索引，避免移除 unique 索引時影響 foreign key 約束
-            $table->index('available_slot_id');
+            $table->dropForeign(['available_slot_id']);
             $table->dropUnique('appointments_available_slot_id_unique');
+        });
 
-            // 條件式唯一：只有未取消的預約才會有 active_slot_id。
-            // 已取消的預約其值為 NULL。在 MySQL 中，多筆 NULL 不會違反 UNIQUE 限制，
-            // 如此一來時段被釋出後，才能由新的預約再次使用。
+        // 2. 重新建立不帶 cascade 的外鍵（MySQL 規範：Generated Column 所參照的欄位不得包含 ON DELETE CASCADE）
+        //    並加入條件式唯一索引
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->foreign('available_slot_id')
+                ->references('id')
+                ->on('available_slots')
+                ->restrictOnDelete();
+
             $table->unsignedBigInteger('active_slot_id')
                 ->nullable()
                 ->storedAs("CASE WHEN status != 'cancelled' THEN available_slot_id ELSE NULL END")
@@ -34,11 +40,18 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('appointments', function (Blueprint $table) {
+            $table->dropForeign(['available_slot_id']);
             $table->dropUnique(['active_slot_id']);
             $table->dropColumn('active_slot_id');
+        });
+
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->foreign('available_slot_id')
+                ->references('id')
+                ->on('available_slots')
+                ->cascadeOnDelete();
 
             $table->unique('available_slot_id');
-            $table->dropIndex(['available_slot_id']);
         });
     }
 };
