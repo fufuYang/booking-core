@@ -136,7 +136,8 @@ class CreateAppointmentTest extends TestCase
 
         $appointment = Appointment::find($response->json('id'));
 
-        $this->assertSame(
+        $this->assertIsArray($appointment->meta_data);
+        $this->assertEquals(
             ['phone' => '0912345678', 'note' => '第一次來'],
             $appointment->meta_data,
         );
