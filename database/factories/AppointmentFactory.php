@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Appointment;
+use App\Models\AvailableSlot;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,6 +20,7 @@ class AppointmentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'service_id' => Service::factory(),
+            'available_slot_id' => AvailableSlot::factory()->booked(),
             'status' => 'pending',
             'meta_data' => ['note' => fake()->sentence()],
         ];

@@ -13,6 +13,7 @@ class Appointment extends Model
     protected $fillable = [
         'user_id',
         'service_id',
+        'available_slot_id',
         'status',
         'meta_data',
     ];
@@ -35,5 +36,11 @@ class Appointment extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    // 關聯：這筆預約佔用哪個時段？
+    public function availableSlot(): BelongsTo
+    {
+        return $this->belongsTo(AvailableSlot::class);
     }
 }
